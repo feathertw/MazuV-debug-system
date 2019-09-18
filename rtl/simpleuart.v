@@ -32,6 +32,7 @@ module simpleuart (
 	input         reg_dat_re,
 	input  [31:0] reg_dat_di,
 	output [31:0] reg_dat_do,
+	output        reg_dat_valid,
 	output        reg_dat_wait
 );
 	reg [31:0] cfg_divider;
@@ -51,6 +52,7 @@ module simpleuart (
 
 	assign reg_dat_wait = reg_dat_we && (send_bitcnt || send_dummy);
 	assign reg_dat_do = recv_buf_valid ? recv_buf_data : ~0;
+        assign reg_dat_valid = recv_buf_valid;
 
 	always @(posedge clk) begin
 		if (!resetn) begin
