@@ -27,7 +27,7 @@ module dm #(
         end
         always @(posedge clk) begin
                 if(!resetn) begin
-                        dmi_rdata <= 'h0;
+                        dmi_rdata <= 0;
                 end else if (dmi_valid && ~dmi_wr) begin
                         dmi_rdata <= register[dmi_addr];
                 end
