@@ -1,5 +1,5 @@
 
-module udtm #(
+module dtm #(
 	parameter [31:0] DEFAULT_DIV = 1 // = clock/baudrate
 ) (
 	output ser_tx,
