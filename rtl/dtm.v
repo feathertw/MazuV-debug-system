@@ -6,7 +6,8 @@ module dtm #(
 	input  ser_rx,
 
         output reg        dmi_valid,
-        output reg        dmi_wr,
+        input             dmi_ready,
+        output reg        dmi_write,
         output reg [ 6:0] dmi_addr,
         output reg [31:0] dmi_wdata,
         input      [31:0] dmi_rdata,
@@ -31,18 +32,20 @@ module dtm #(
         parameter STATE_DATA_BYTE3 = 6;
         parameter STATE_CHECKSUM   = 7;
 
+        wire dmi_match = dmi_valid && dmi_ready;
+
         reg [3:0] rx_state;
         reg [7:0] rx_checksum;
         always @(posedge clk) begin
                 if (!resetn) begin
-                        dmi_wr    <= 0;
+                        dmi_write <= 0;
                         dmi_addr  <= 0;
                         dmi_wdata <= 0;
                         dmi_valid <= 0;
                         rx_state  <= STATE_IDLE;
-                end else if (!uart_rx_rdy) begin
+                end else if (dmi_match) begin
                         dmi_valid <= 0;
-                end else begin
+                end else if (uart_rx_rdy) begin
                         rx_checksum <= rx_checksum ^ uart_rx_data[7:0];
                         case(rx_state)
                                 STATE_IDLE: begin
@@ -51,9 +54,9 @@ module dtm #(
                                                 rx_state <= STATE_ADDR;
                                 end
                                 STATE_ADDR: begin
-                                        dmi_wr   <= uart_rx_data[7];
-                                        dmi_addr <= uart_rx_data[6:0];
-                                        rx_state <= STATE_DATA_BYTE0;
+                                        dmi_write <= uart_rx_data[7];
+                                        dmi_addr  <= uart_rx_data[6:0];
+                                        rx_state  <= STATE_DATA_BYTE0;
                                 end
                                 STATE_DATA_BYTE0: begin
                                         dmi_wdata[7:0] <= uart_rx_data[7:0];
@@ -92,7 +95,7 @@ module dtm #(
                         uart_tx_vld  <= 0;
                         case(tx_state)
                                 STATE_IDLE: begin
-                                        if(dmi_valid && !dmi_wr) begin
+                                        if(dmi_match && !dmi_write) begin
                                                 tx_state     <= STATE_MAGICNUM;
                                                 uart_tx_vld  <= 1;
                                                 uart_tx_data <= MAGIC_NUMBER;
@@ -103,8 +106,8 @@ module dtm #(
                                         if(~uart_tx_vld && ~uart_tx_busy) begin
                                                 tx_state     <= STATE_ADDR;
                                                 uart_tx_vld  <= 1;
-                                                uart_tx_data <= {dmi_wr, dmi_addr};
-                                                tx_checksum  <= tx_checksum ^ {dmi_wr, dmi_addr};
+                                                uart_tx_data <= {dmi_write, dmi_addr};
+                                                tx_checksum  <= tx_checksum ^ {dmi_write, dmi_addr};
                                         end
                                 end
                                 STATE_ADDR: begin
