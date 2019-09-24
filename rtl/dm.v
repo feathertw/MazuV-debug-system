@@ -23,7 +23,7 @@ module dm #(
         reg [31:0] ram [0:7];
 
         reg [7:0] rom_file [0:128*4-1];
-        wire [31:0] rom [0:128-1+2];
+        wire [31:0] rom [0:128-1];
 
         genvar i;
         generate
@@ -31,8 +31,6 @@ module dm #(
                         assign rom[i] = {rom_file[i*4+3],rom_file[i*4+2],rom_file[i*4+1],rom_file[i*4+0]};
                 end
         endgenerate
-        assign rom[128] = dm_command;
-        assign rom[129] = 0;
         initial begin
                 $readmemh("debug/src/dm_rom.hex", rom_file);
         end
@@ -50,18 +48,18 @@ module dm #(
                         interrupt <= 0;
                 end else if(dmi_match && dmi_write) begin
                         interrupt <= 1;
-                end else if (bus_match && bus_write && {bus_addr,2'h0}=='h204)begin
+                end else if (bus_match && bus_write && {bus_addr,2'h0}=='h400)begin
                         interrupt <= 0;
                 end
         end
-        reg [31:0] dm_command;
+        reg [31:0] dm_request;
         always @(posedge clk) begin
                 if(!resetn) begin
-                        dm_command <= 0;
+                        dm_request <= 0;
                 end else if(dmi_match && !dmi_write) begin
-                        dm_command <= 32'h8000_0000;
-                end else if (bus_match && bus_write && {bus_addr,2'h0}=='h200)begin
-                        dm_command <= 0;
+                        dm_request <= 32'h8000_0000;
+                end else if (bus_match && bus_write && {bus_addr,2'h0}=='h420)begin
+                        dm_request <= 0;
                 end
         end
 
@@ -101,7 +99,11 @@ module dm #(
                 if(!resetn) begin
                         bus_rdata <= 0;
                 end else if (bus_valid && !bus_write) begin
-                        bus_rdata <= rom[bus_addr];
+                        if({bus_addr,2'h0}<'h200) begin
+                                bus_rdata <= rom[bus_addr];
+                        end else if({bus_addr,2'h0} == 'h420) begin
+                                bus_rdata <= dm_request;
+                        end
                 end
         end
 
