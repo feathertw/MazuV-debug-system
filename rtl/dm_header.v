@@ -8,6 +8,10 @@ parameter DMI_ADDR_DATA1          = 7'h05;
 parameter DMI_ADDR_DMCONTROL      = 7'h10;
 parameter DMI_ADDR_DMSTATUS       = 7'h11;
 
+parameter HARTSEL_MSB  = 19;
+parameter HARTSEL_LSB  =  0;
+`define HARTSEL_RANGE HARTSEL_MSB:HARTSEL_LSB
+`define HARTSEL_WIDTH 20
 
 parameter DMCONTROL_HALTREQ_MSB          = 31;
 parameter DMCONTROL_HALTREQ_LSB          = 31;

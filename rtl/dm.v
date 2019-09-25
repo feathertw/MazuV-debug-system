@@ -1,5 +1,5 @@
 module dm #(
-	parameter NULL = 1
+	parameter NUM_HART = 1
 ) (
         output            interrupt,
         input             dmi_valid,
@@ -48,8 +48,13 @@ module dm #(
                 end
                 dmi_register[DMI_ADDR_DMCONTROL][`DMCONTROL_HALTREQ_RANGE]  = dmcontrol_haltreq;
                 dmi_register[DMI_ADDR_DMCONTROL][`DMCONTROL_DMACTIVE_RANGE] = dmcontrol_dmactive;
+                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ALLRUNNING_RANGE] = ~hart_halt[hartsel];
+                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ANYRUNNING_RANGE] = ~hart_halt[hartsel];
+                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ALLHALTED_RANGE]  =  hart_halt[hartsel];
+                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ANYHALTED_RANGE]  =  hart_halt[hartsel];
         end
 
+        reg [`HARTSEL_RANGE] hartsel;
 
         reg [`DMCONTROL_HALTREQ_RANGE]  dmcontrol_haltreq;
         reg [`DMCONTROL_DMACTIVE_RANGE] dmcontrol_dmactive;
@@ -64,6 +69,13 @@ module dm #(
                         dmcontrol_haltreq <= `DMCONTROL_HALTREQ_WIDTH'h0;
                 end else if(dmi_match && dmi_write && dmi_addr==DMI_ADDR_DMCONTROL) begin
                         dmcontrol_haltreq <= dmi_wdata[`DMCONTROL_HALTREQ_RANGE];
+                end
+        end
+        always @(posedge clk) begin
+                if(!resetn || !dmcontrol_dmactive) begin
+                        hartsel <= `HARTSEL_WIDTH'h0;
+                end else if(dmi_match && dmi_write && dmi_addr==DMI_ADDR_DMCONTROL) begin
+                        hartsel <= {dmi_wdata[`DMCONTROL_HARTSELHI_RANGE],dmi_wdata[`DMCONTROL_HARTSELLO_RANGE]};
                 end
         end
 
@@ -88,12 +100,22 @@ module dm #(
                 end
         end
 
+        reg [NUM_HART-1:0] hart_halt;
+        always @(posedge clk) begin
+                if(!resetn) begin
+                        hart_halt <= 0;
+                end else if (bus_match && bus_write && {bus_addr,2'h0}==BUS_ADDR_CORE_HALT)begin
+                        hart_halt[bus_wdata] <= 1;
+                end else if (bus_match && bus_write && {bus_addr,2'h0}==BUS_ADDR_CORE_RESUME)begin
+                        hart_halt[bus_wdata] <= 0;
+                end
+        end
 
         always @(posedge clk) begin
                 if(!resetn) begin
                         dmi_rdata <= 0;
                 end else if (dmi_valid && ~dmi_write) begin
-                        //dmi_rdata <= register[dmi_addr];
+                        dmi_rdata <= dmi_register[dmi_addr];
                 end
         end
 
