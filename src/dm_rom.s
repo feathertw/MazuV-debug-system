@@ -27,25 +27,30 @@ check_request:
         la      s0, dm_request
         lw      s0, 0(s0)
         srli    s0, s0, 20
-        andi    s0, s0, 0x7ff
+        andi    s0, s0, 0x3f
 
-        beqz    s0, request_resume
-        addi    s0, s0, -1
-        beqz    s0, request_set_s0
-        addi    s0, s0, -1
-        beqz    s0, request_set_s1
-        addi    s0, s0, -1
-        beqz    s0, request_set_gpr
-        addi    s0, s0, -1
-        beqz    s0, request_get_s0
-        addi    s0, s0, -1
-        beqz    s0, request_get_s1
-        addi    s0, s0, -1
-        beqz    s0, request_get_gpr
-        addi    s0, s0, -1
-        beqz    s0, request_set_csr
-        addi    s0, s0, -1
-        beqz    s0, request_get_csr
+        li      s1, 1
+        beq     s0, s1, request_resume
+        li      s1, 2
+        beq     s0, s1, request_set_s0
+        li      s1, 3
+        beq     s0, s1, request_set_s1
+        li      s1, 4
+        beq     s0, s1, request_set_gpr
+        li      s1, 5
+        beq     s0, s1, request_get_s0
+        li      s1, 6
+        beq     s0, s1, request_get_s1
+        li      s1, 7
+        beq     s0, s1, request_get_gpr
+        li      s1, 8
+        beq     s0, s1, request_set_dpc
+        li      s1, 9
+        beq     s0, s1, request_set_csr
+        li      s1, 10
+        beq     s0, s1, request_get_dpc
+        li      s1, 11
+        beq     s0, s1, request_get_csr
 loop:   j       loop
 
 request_resume:
@@ -87,10 +92,20 @@ request_get_gpr:
         sw      x0, 0(s0) ###
         j       request_complete
 
+request_set_dpc:
+        la      s0, dm_data0
+        lw      s1, 0(s0)
+        csrw    dpc, s1
+        j       request_complete
 request_set_csr:
         la      s0, dm_data0
         lw      s1, 0(s0)
         csrw    0x000, s1 ###
+        j       request_complete
+request_get_dpc:
+        la      s0, dm_data0
+        csrr    s1, dpc
+        sw      s1, 0(s0)
         j       request_complete
 request_get_csr:
         la      s0, dm_data0

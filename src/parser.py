@@ -27,8 +27,8 @@ while orignal:
         elif "csrrs1,0x7b2" in new:   print  "        picorv32_getq_insn(9, 2)"
         elif "csrrs1,0x7b3" in new:   print  "        picorv32_getq_insn(9, 3)"
 
-        elif "csrw0x000,s1" in new:   print  "        picorv32_setq_insn(0, 9)"
-        elif "csrrs1,0x000" in new:   print  "        picorv32_getq_insn(9, 0)"
+        elif "csrwdpc,s1" in new:     print  "        picorv32_setq_insn(0, 9)"
+        elif "csrrs1,dpc" in new:     print  "        picorv32_getq_insn(9, 0)"
 
         elif "dret" in new:           print  "        picorv32_retirq_insn()"
         elif "csrrs1,mhartid" in new: print  "        addi    s1, x0, 0"

@@ -2,16 +2,25 @@ parameter BUS_ADDR_CORE_HALT      =  'h400;
 parameter BUS_ADDR_CORE_RESUME    =  'h404;
 parameter BUS_ADDR_CORE_EXCEPTION =  'h408;
 parameter BUS_ADDR_DM_REQUEST     =  'h420;
+parameter BUS_ADDR_DATA0     =  'h440;
+parameter BUS_ADDR_DATA1     =  'h444;
 
 parameter DMI_ADDR_DATA0          = 7'h04;
 parameter DMI_ADDR_DATA1          = 7'h05;
 parameter DMI_ADDR_DMCONTROL      = 7'h10;
 parameter DMI_ADDR_DMSTATUS       = 7'h11;
+parameter DMI_ADDR_ABSTRACTCS     = 7'h16;
+parameter DMI_ADDR_COMMAND        = 7'h17;
 
 parameter HARTSEL_MSB  = 19;
 parameter HARTSEL_LSB  =  0;
 `define HARTSEL_RANGE HARTSEL_MSB:HARTSEL_LSB
 `define HARTSEL_WIDTH 20
+
+parameter DMREG_MSB  = 31;
+parameter DMREG_LSB  =  0;
+`define DMREG_RANGE  DMREG_MSB:DMREG_LSB
+`define DMREG_WIDTH  32
 
 // DMCONTROL
 parameter HALTREQ_MSB          = 31;
@@ -133,3 +142,102 @@ parameter VERSION_LSB            =  0;
 `define CONFSTRPTRVALID_RANGE    CONFSTRPTRVALID_MSB:CONFSTRPTRVALID_LSB
 `define VERSION_RANGE            VERSION_MSB:VERSION_LSB
 
+// ABSTRACTCS
+parameter PROGBUFSIZE_MSB  = 28;
+parameter PROGBUFSIZE_LSB  = 24;
+parameter BUSY_MSB         = 12;
+parameter BUSY_LSB         = 12;
+parameter CMDERR_MSB       = 10;
+parameter CMDERR_LSB       =  8;
+parameter DATACOUNT_MSB    =  3;
+parameter DATACOUNT_LSB    =  0;
+`define PROGBUFSIZE_WIDTH  5
+`define BUSY_WIDTH         1
+`define CMDERR_WIDTH       3
+`define DATACOUNT_WIDTH    4
+`define PROGBUFSIZE_RANGE  PROGBUFSIZE_MSB:PROGBUFSIZE_LSB
+`define BUSY_RANGE         BUSY_MSB:BUSY_LSB
+`define CMDERR_RANGE       CMDERR_MSB:CMDERR_LSB
+`define DATACOUNT_RANGE    DATACOUNT_MSB:DATACOUNT_LSB
+
+// COMMAND
+parameter CMDTYPE_MSB           = 31;
+parameter CMDTYPE_LSB           = 24;
+parameter AARSIZE_MSB           = 22;
+parameter AARSIZE_LSB           = 20;
+parameter AARPOSTINCREMENT_MSB  = 19;
+parameter AARPOSTINCREMENT_LSB  = 19;
+parameter POSTEXEC_MSB          = 18;
+parameter POSTEXEC_LSB          = 18;
+parameter TRANSFER_MSB          = 17;
+parameter TRANSFER_LSB          = 17;
+parameter WRITE_MSB             = 16;
+parameter WRITE_LSB             = 16;
+parameter REGNO_MSB             = 15;
+parameter REGNO_LSB             =  0;
+parameter AAMVIRTUAL_MSB        = 23;
+parameter AAMVIRTUAL_LSB        = 23;
+parameter AAMSIZE_MSB           = 22;
+parameter AAMSIZE_LSB           = 20;
+parameter AAMPOSTINCREMENT_MSB  = 19;
+parameter AAMPOSTINCREMENT_LSB  = 19;
+parameter TARGETSPECIFIC_MSB    = 15;
+parameter TARGETSPECIFIC_LSB    = 14;
+`define CMDTYPE_WIDTH           8
+`define AARSIZE_WIDTH           3
+`define AARPOSTINCREMENT_WIDTH  1
+`define POSTEXEC_WIDTH          1
+`define TRANSFER_WIDTH          1
+`define WRITE_WIDTH             1
+`define REGNO_WIDTH             16
+`define AAMVIRTUAL_WIDTH        1
+`define AAMSIZE_WIDTH           3
+`define AAMPOSTINCREMENT_WIDTH  1
+`define TARGETSPECIFIC_WIDTH    2
+`define CMDTYPE_RANGE           CMDTYPE_MSB:CMDTYPE_LSB
+`define AARSIZE_RANGE           AARSIZE_MSB:AARSIZE_LSB
+`define AARPOSTINCREMENT_RANGE  AARPOSTINCREMENT_MSB:AARPOSTINCREMENT_LSB
+`define POSTEXEC_RANGE          POSTEXEC_MSB:POSTEXEC_LSB
+`define TRANSFER_RANGE          TRANSFER_MSB:TRANSFER_LSB
+`define WRITE_RANGE             WRITE_MSB:WRITE_LSB
+`define REGNO_RANGE             REGNO_MSB:REGNO_LSB
+`define AAMVIRTUAL_RANGE        AAMVIRTUAL_MSB:AAMVIRTUAL_LSB
+`define AAMSIZE_RANGE           AAMSIZE_MSB:AAMSIZE_LSB
+`define AAMPOSTINCREMENT_RANGE  AAMPOSTINCREMENT_MSB:AAMPOSTINCREMENT_LSB
+`define TARGETSPECIFIC_RANGE    TARGETSPECIFIC_MSB:TARGETSPECIFIC_LSB
+
+parameter CMDTYPE_ACCESSREG   = `CMDTYPE_WIDTH'h0;
+parameter CMDTYPE_QUICKACCESS = `CMDTYPE_WIDTH'h1;
+parameter CMDTYPE_ACCESSMEM   = `CMDTYPE_WIDTH'h2;
+parameter AARSIZE_32BITS      = `AARSIZE_WIDTH'h2;
+parameter AARSIZE_64BITS      = `AARSIZE_WIDTH'h3;
+parameter AARSIZE_128BITS     = `AARSIZE_WIDTH'h4;
+parameter REGNO_CSR_BASE      = `REGNO_WIDTH'h0000;
+parameter REGNO_GPR_BASE      = `REGNO_WIDTH'h1000;
+parameter REGNO_FPR_BASE      = `REGNO_WIDTH'h1020;
+
+// CUSTOM
+parameter REQUEST_VALID_MSB  = 31;
+parameter REQUEST_VALID_LSB  = 31;
+parameter REQUEST_NUMBER_MSB = 25;
+parameter REQUEST_NUMBER_LSB = 20;
+`define REQUEST_VALID_WIDTH  1
+`define REQUEST_NUMBER_WIDTH 6
+`define REQUEST_VALID_RANGE  REQUEST_VALID_MSB:REQUEST_VALID_LSB
+`define REQUEST_NUMBER_RANGE REQUEST_NUMBER_MSB:REQUEST_NUMBER_LSB
+
+parameter REQUEST_NUMBER_RESUME  =  1;
+parameter REQUEST_NUMBER_SET_S0  =  2;
+parameter REQUEST_NUMBER_SET_S1  =  3;
+parameter REQUEST_NUMBER_SET_GPR =  4;
+parameter REQUEST_NUMBER_GET_S0  =  5;
+parameter REQUEST_NUMBER_GET_S1  =  6;
+parameter REQUEST_NUMBER_GET_GPR =  7;
+parameter REQUEST_NUMBER_SET_DPC =  8;
+parameter REQUEST_NUMBER_SET_CSR =  9;
+parameter REQUEST_NUMBER_GET_DPC = 10;
+parameter REQUEST_NUMBER_GET_CSR = 11;
+
+parameter CSR_DPC = 12'h7B1;
+parameter GPR_S0  = 5'h8;
+parameter GPR_S1  = 5'h9;
