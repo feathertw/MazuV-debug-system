@@ -60,21 +60,21 @@ module dm #(
         reg [`DMCONTROL_DMACTIVE_RANGE] dmcontrol_dmactive;
         always @(posedge clk) begin if(!resetn) begin
                         dmcontrol_dmactive <= `DMCONTROL_DMACTIVE_WIDTH'h0;
-                end else if(dmi_match && dmi_write && dmi_addr==DMI_ADDR_DMCONTROL) begin
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
                         dmcontrol_dmactive <= dmi_wdata[`DMCONTROL_DMACTIVE_RANGE];
                 end
         end
         always @(posedge clk) begin
                 if(!resetn || !dmcontrol_dmactive) begin
                         dmcontrol_haltreq <= `DMCONTROL_HALTREQ_WIDTH'h0;
-                end else if(dmi_match && dmi_write && dmi_addr==DMI_ADDR_DMCONTROL) begin
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
                         dmcontrol_haltreq <= dmi_wdata[`DMCONTROL_HALTREQ_RANGE];
                 end
         end
         always @(posedge clk) begin
                 if(!resetn || !dmcontrol_dmactive) begin
                         hartsel <= `HARTSEL_WIDTH'h0;
-                end else if(dmi_match && dmi_write && dmi_addr==DMI_ADDR_DMCONTROL) begin
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
                         hartsel <= {dmi_wdata[`DMCONTROL_HARTSELHI_RANGE],dmi_wdata[`DMCONTROL_HARTSELLO_RANGE]};
                 end
         end
@@ -93,9 +93,9 @@ module dm #(
         always @(posedge clk) begin
                 if(!resetn) begin
                         dm_request <= 0;
-                end else if(dmi_match && dmi_write && dmi_addr==DMI_ADDR_DMCONTROL && dmi_wdata[`DMCONTROL_RESUMEREQ_RANGE]) begin
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`DMCONTROL_RESUMEREQ_RANGE]) begin
                         dm_request <= 32'h8000_0000;
-                end else if (bus_match && bus_write && {bus_addr,2'h0}==BUS_ADDR_DM_REQUEST)begin
+                end else if (bus_match_write(BUS_ADDR_DM_REQUEST))begin
                         dm_request <= 0;
                 end
         end
@@ -104,9 +104,9 @@ module dm #(
         always @(posedge clk) begin
                 if(!resetn) begin
                         hart_halt <= 0;
-                end else if (bus_match && bus_write && {bus_addr,2'h0}==BUS_ADDR_CORE_HALT)begin
+                end else if (bus_match_write(BUS_ADDR_CORE_HALT))begin
                         hart_halt[bus_wdata] <= 1;
-                end else if (bus_match && bus_write && {bus_addr,2'h0}==BUS_ADDR_CORE_RESUME)begin
+                end else if (bus_match_write(BUS_ADDR_CORE_RESUME))begin
                         hart_halt[bus_wdata] <= 0;
                 end
         end
@@ -153,4 +153,18 @@ module dm #(
                         bus_ready <= 1;
                 end
         end
+
+        function dmi_match_write;
+                input [6:0] addr;
+                begin
+                        dmi_match_write = dmi_match && dmi_write && dmi_addr==addr;
+                end
+        endfunction
+
+        function bus_match_write;
+                input [19:0] addr;
+                begin
+                        bus_match_write = bus_match && bus_write && {bus_addr,2'h0}==addr;
+                end
+        endfunction
 endmodule
