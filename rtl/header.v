@@ -1,0 +1,135 @@
+parameter BUS_ADDR_CORE_HALT      =  'h400;
+parameter BUS_ADDR_CORE_RESUME    =  'h404;
+parameter BUS_ADDR_CORE_EXCEPTION =  'h408;
+parameter BUS_ADDR_DM_REQUEST     =  'h420;
+
+parameter DMI_ADDR_DATA0          = 7'h04;
+parameter DMI_ADDR_DATA1          = 7'h05;
+parameter DMI_ADDR_DMCONTROL      = 7'h10;
+parameter DMI_ADDR_DMSTATUS       = 7'h11;
+
+parameter HARTSEL_MSB  = 19;
+parameter HARTSEL_LSB  =  0;
+`define HARTSEL_RANGE HARTSEL_MSB:HARTSEL_LSB
+`define HARTSEL_WIDTH 20
+
+// DMCONTROL
+parameter HALTREQ_MSB          = 31;
+parameter HALTREQ_LSB          = 31;
+parameter RESUMEREQ_MSB        = 30;
+parameter RESUMEREQ_LSB        = 30;
+parameter HARTRESET_MSB        = 29;
+parameter HARTRESET_LSB        = 29;
+parameter ACKHAVERESET_MSB     = 28;
+parameter ACKHAVERESET_LSB     = 28;
+parameter HASEL_MSB            = 26;
+parameter HASEL_LSB            = 26;
+parameter HARTSELLO_MSB        = 25;
+parameter HARTSELLO_LSB        = 16;
+parameter HARTSELHI_MSB        = 15;
+parameter HARTSELHI_LSB        =  6;
+parameter SETRESETHALTREQ_MSB  =  3;
+parameter SETRESETHALTREQ_LSB  =  3;
+parameter CLRRESETHALTREQ_MSB  =  2;
+parameter CLRRESETHALTREQ_LSB  =  2;
+parameter NDMRESET_MSB         =  1;
+parameter NDMRESET_LSB         =  1;
+parameter DMACTIVE_MSB         =  0;
+parameter DMACTIVE_LSB         =  0;
+`define HALTREQ_WIDTH           1
+`define RESUMEREQ_WIDTH         1
+`define HARTRESET_WIDTH         1
+`define ACKHAVERESET_WIDTH      1
+`define HASEL_WIDTH             1
+`define HARTSELLO_WIDTH         10
+`define HARTSELHI_WIDTH         10
+`define SETRESETHALTREQ_WIDTH   1
+`define CLRRESETHALTREQ_WIDTH   1
+`define NDMRESET_WIDTH          1
+`define DMACTIVE_WIDTH          1
+`define HALTREQ_RANGE           HALTREQ_MSB:HALTREQ_LSB
+`define RESUMEREQ_RANGE         RESUMEREQ_MSB:RESUMEREQ_LSB
+`define HARTRESET_RANGE         HARTRESET_MSB:HARTRESET_LSB
+`define ACKHAVERESET_RANGE      ACKHAVERESET_MSB:ACKHAVERESET_LSB
+`define HASEL_RANGE             HASEL_MSB:HASEL_LSB
+`define HARTSELLO_RANGE         HARTSELLO_MSB:HARTSELLO_LSB
+`define HARTSELHI_RANGE         HARTSELHI_MSB:HARTSELHI_LSB
+`define SETRESETHALTREQ_RANGE   SETRESETHALTREQ_MSB:SETRESETHALTREQ_LSB
+`define CLRRESETHALTREQ_RANGE   CLRRESETHALTREQ_MSB:CLRRESETHALTREQ_LSB
+`define NDMRESET_RANGE          NDMRESET_MSB:NDMRESET_LSB
+`define DMACTIVE_RANGE          DMACTIVE_MSB:DMACTIVE_LSB
+
+// DMSTATUS
+parameter IMPEBREAK_MSB          = 22;
+parameter IMPEBREAK_LSB          = 22;
+parameter ALLHAVERESET_MSB       = 19;
+parameter ALLHAVERESET_LSB       = 19;
+parameter ANYHAVERESET_MSB       = 18;
+parameter ANYHAVERESET_LSB       = 18;
+parameter ALLRESUMEACK_MSB       = 17;
+parameter ALLRESUMEACK_LSB       = 17;
+parameter ANYRESUMEACK_MSB       = 16;
+parameter ANYRESUMEACK_LSB       = 16;
+parameter ALLNONEEXISTENT_MSB    = 15;
+parameter ALLNONEEXISTENT_LSB    = 15;
+parameter ANYNONEEXISTENT_MSB    = 14;
+parameter ANYNONEEXISTENT_LSB    = 14;
+parameter ALLUNAVAIL_MSB         = 13;
+parameter ALLUNAVAIL_LSB         = 13;
+parameter ANYUNAVAIL_MSB         = 12;
+parameter ANYUNAVAIL_LSB         = 12;
+parameter ALLRUNNING_MSB         = 11;
+parameter ALLRUNNING_LSB         = 11;
+parameter ANYRUNNING_MSB         = 10;
+parameter ANYRUNNING_LSB         = 10;
+parameter ALLHALTED_MSB          =  9;
+parameter ALLHALTED_LSB          =  9;
+parameter ANYHALTED_MSB          =  8;
+parameter ANYHALTED_LSB          =  8;
+parameter AUTHENTICATED_MSB      =  7;
+parameter AUTHENTICATED_LSB      =  7;
+parameter AUTHBUSY_MSB           =  6;
+parameter AUTHBUSY_LSB           =  6;
+parameter HASRESETHALTREQ_MSB    =  5;
+parameter HASRESETHALTREQ_LSB    =  5;
+parameter CONFSTRPTRVALID_MSB    =  4;
+parameter CONFSTRPTRVALID_LSB    =  4;
+parameter VERSION_MSB            =  3;
+parameter VERSION_LSB            =  0;
+`define IMPEBREAK_WIDTH          1
+`define ALLHAVERESET_WIDTH       1
+`define ANYHAVERESET_WIDTH       1
+`define ALLRESUMEACK_WIDTH       1
+`define ANYRESUMEACK_WIDTH       1
+`define ALLNONEEXISTENT_WIDTH    1
+`define ANYNONEEXISTENT_WIDTH    1
+`define ALLUNAVAIL_WIDTH         1
+`define ANYUNAVAIL_WIDTH         1
+`define ALLRUNNING_WIDTH         1
+`define ANYRUNNING_WIDTH         1
+`define ALLHALTED_WIDTH          1
+`define ANYHALTED_WIDTH          1
+`define AUTHENTICATED_WIDTH      1
+`define AUTHBUSY_WIDTH           1
+`define HASRESETHALTREQ_WIDTH    1
+`define CONFSTRPTRVALID_WIDTH    1
+`define VERSION_WIDTH            4
+`define IMPEBREAK_RANGE          IMPEBREAK_MSB:IMPEBREAK_LSB
+`define ALLHAVERESET_RANGE       ALLHAVERESET_MSB:ALLHAVERESET_LSB
+`define ANYHAVERESET_RANGE       ANYHAVERESET_MSB:ANYHAVERESET_LSB
+`define ALLRESUMEACK_RANGE       ALLRESUMEACK_MSB:ALLRESUMEACK_LSB
+`define ANYRESUMEACK_RANGE       ANYRESUMEACK_MSB:ANYRESUMEACK_LSB
+`define ALLNONEEXISTENT_RANGE    ALLNONEEXISTENT_MSB:ALLNONEEXISTENT_LSB
+`define ANYNONEEXISTENT_RANGE    ANYNONEEXISTENT_MSB:ANYNONEEXISTENT_LSB
+`define ALLUNAVAIL_RANGE         ALLUNAVAIL_MSB:ALLUNAVAIL_LSB
+`define ANYUNAVAIL_RANGE         ANYUNAVAIL_MSB:ANYUNAVAIL_LSB
+`define ALLRUNNING_RANGE         ALLRUNNING_MSB:ALLRUNNING_LSB
+`define ANYRUNNING_RANGE         ANYRUNNING_MSB:ANYRUNNING_LSB
+`define ALLHALTED_RANGE          ALLHALTED_MSB:ALLHALTED_LSB
+`define ANYHALTED_RANGE          ANYHALTED_MSB:ANYHALTED_LSB
+`define AUTHENTICATED_RANGE      AUTHENTICATED_MSB:AUTHENTICATED_LSB
+`define AUTHBUSY_RANGE           AUTHBUSY_MSB:AUTHBUSY_LSB
+`define HASRESETHALTREQ_RANGE    HASRESETHALTREQ_MSB:HASRESETHALTREQ_LSB
+`define CONFSTRPTRVALID_RANGE    CONFSTRPTRVALID_MSB:CONFSTRPTRVALID_LSB
+`define VERSION_RANGE            VERSION_MSB:VERSION_LSB
+

@@ -20,7 +20,7 @@ module dm #(
 	input clk
 );
 
-        `include "debug/rtl/dm_header.v"
+        `include "debug/rtl/header.v"
 
         integer i;
         localparam ROM_SIZE = 'h200;
@@ -39,43 +39,43 @@ module dm #(
         endgenerate
 
         wire dmi_match = dmi_valid && dmi_ready;
-        assign interrupt = dmcontrol_haltreq ;
+        assign interrupt = haltreq ;
 
-        reg [31:0] dmi_register [0:2**7-1];
+        reg [31:0] dm_register [0:2**7-1];
         always @* begin
                 for (i=0; i<2**7; i=i+1) begin
-                        dmi_register[i] = 32'h0;
+                        dm_register[i] = 32'h0;
                 end
-                dmi_register[DMI_ADDR_DMCONTROL][`DMCONTROL_HALTREQ_RANGE]  = dmcontrol_haltreq;
-                dmi_register[DMI_ADDR_DMCONTROL][`DMCONTROL_DMACTIVE_RANGE] = dmcontrol_dmactive;
-                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ALLRUNNING_RANGE] = ~hart_halt[hartsel];
-                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ANYRUNNING_RANGE] = ~hart_halt[hartsel];
-                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ALLHALTED_RANGE]  =  hart_halt[hartsel];
-                dmi_register[DMI_ADDR_DMSTATUS][`DMSTATUS_ANYHALTED_RANGE]  =  hart_halt[hartsel];
+                dm_register[DMI_ADDR_DMCONTROL][`HALTREQ_RANGE]  = haltreq;
+                dm_register[DMI_ADDR_DMCONTROL][`DMACTIVE_RANGE] = dmactive;
+                dm_register[DMI_ADDR_DMSTATUS][`ALLRUNNING_RANGE] = ~hart_halt[hartsel];
+                dm_register[DMI_ADDR_DMSTATUS][`ANYRUNNING_RANGE] = ~hart_halt[hartsel];
+                dm_register[DMI_ADDR_DMSTATUS][`ALLHALTED_RANGE]  =  hart_halt[hartsel];
+                dm_register[DMI_ADDR_DMSTATUS][`ANYHALTED_RANGE]  =  hart_halt[hartsel];
         end
 
         reg [`HARTSEL_RANGE] hartsel;
 
-        reg [`DMCONTROL_HALTREQ_RANGE]  dmcontrol_haltreq;
-        reg [`DMCONTROL_DMACTIVE_RANGE] dmcontrol_dmactive;
+        reg [`HALTREQ_RANGE]  haltreq;
+        reg [`DMACTIVE_RANGE] dmactive;
         always @(posedge clk) begin if(!resetn) begin
-                        dmcontrol_dmactive <= `DMCONTROL_DMACTIVE_WIDTH'h0;
+                        dmactive <= `DMACTIVE_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
-                        dmcontrol_dmactive <= dmi_wdata[`DMCONTROL_DMACTIVE_RANGE];
+                        dmactive <= dmi_wdata[`DMACTIVE_RANGE];
                 end
         end
         always @(posedge clk) begin
-                if(!resetn || !dmcontrol_dmactive) begin
-                        dmcontrol_haltreq <= `DMCONTROL_HALTREQ_WIDTH'h0;
+                if(!resetn || !dmactive) begin
+                        haltreq <= `HALTREQ_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
-                        dmcontrol_haltreq <= dmi_wdata[`DMCONTROL_HALTREQ_RANGE];
+                        haltreq <= dmi_wdata[`HALTREQ_RANGE];
                 end
         end
         always @(posedge clk) begin
-                if(!resetn || !dmcontrol_dmactive) begin
+                if(!resetn || !dmactive) begin
                         hartsel <= `HARTSEL_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
-                        hartsel <= {dmi_wdata[`DMCONTROL_HARTSELHI_RANGE],dmi_wdata[`DMCONTROL_HARTSELLO_RANGE]};
+                        hartsel <= {dmi_wdata[`HARTSELHI_RANGE],dmi_wdata[`HARTSELLO_RANGE]};
                 end
         end
 
@@ -93,7 +93,7 @@ module dm #(
         always @(posedge clk) begin
                 if(!resetn) begin
                         dm_request <= 0;
-                end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`DMCONTROL_RESUMEREQ_RANGE]) begin
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`RESUMEREQ_RANGE]) begin
                         dm_request <= 32'h8000_0000;
                 end else if (bus_match_write(BUS_ADDR_DM_REQUEST))begin
                         dm_request <= 0;
@@ -115,7 +115,7 @@ module dm #(
                 if(!resetn) begin
                         dmi_rdata <= 0;
                 end else if (dmi_valid && ~dmi_write) begin
-                        dmi_rdata <= dmi_register[dmi_addr];
+                        dmi_rdata <= dm_register[dmi_addr];
                 end
         end
 
