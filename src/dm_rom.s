@@ -51,7 +51,11 @@ check_request:
         beq     s0, s1, request_get_dpc
         li      s1, 11
         beq     s0, s1, request_get_csr
-loop:   j       loop
+        li      s1, 12
+        beq     s0, s1, request_set_mem
+        li      s1, 13
+        beq     s0, s1, request_get_mem
+1:      j       1b
 
 request_resume:
         csrr    s1, mhartid
@@ -112,6 +116,20 @@ request_get_csr:
         csrr    s1, 0x000 ###
         sw      s1, 0(s0)
         j       request_complete
+request_set_mem:
+        la      s0, dm_data0
+        la      s1, dm_data1
+        lw      s0, 0(s0)
+        lw      s1, 0(s1)
+        sb      s0, 0(s1) ###
+        j       request_complete
+request_get_mem:
+        la      s0, dm_data0
+        la      s1, dm_data1
+        lw      s1, 0(s1)
+        lb      s1, 0(s1) ###
+        sw      s1, 0(s0)
+        j       request_complete
 
 request_complete:
         la      s0, dm_request
@@ -119,6 +137,7 @@ request_complete:
         sw      s1, 0(s0)
         j       check_valid
 finish_rom:
+1:      j       1b
 
 .align 10
 core_halt:      .word 1

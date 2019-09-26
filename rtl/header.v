@@ -215,6 +215,13 @@ parameter AARSIZE_128BITS     = `AARSIZE_WIDTH'h4;
 parameter REGNO_CSR_BASE      = `REGNO_WIDTH'h0000;
 parameter REGNO_GPR_BASE      = `REGNO_WIDTH'h1000;
 parameter REGNO_FPR_BASE      = `REGNO_WIDTH'h1020;
+parameter AAMVIRTUAL_PHYSICAL = `AAMVIRTUAL_WIDTH'h0;
+parameter AAMVIRTUAL_VIRTUAL  = `AAMVIRTUAL_WIDTH'h1;
+parameter AAMSIZE_8BITS       = `AARSIZE_WIDTH'h0;
+parameter AAMSIZE_16BITS      = `AARSIZE_WIDTH'h1;
+parameter AAMSIZE_32BITS      = `AARSIZE_WIDTH'h2;
+parameter AAMSIZE_64BITS      = `AARSIZE_WIDTH'h3;
+parameter AAMSIZE_128BITS     = `AARSIZE_WIDTH'h4;
 
 // CUSTOM
 parameter REQUEST_VALID_MSB  = 31;
@@ -237,6 +244,8 @@ parameter REQUEST_NUMBER_SET_DPC =  8;
 parameter REQUEST_NUMBER_SET_CSR =  9;
 parameter REQUEST_NUMBER_GET_DPC = 10;
 parameter REQUEST_NUMBER_GET_CSR = 11;
+parameter REQUEST_NUMBER_SET_MEM = 12;
+parameter REQUEST_NUMBER_GET_MEM = 13;
 
 parameter CSR_DPC = 12'h7B1;
 parameter GPR_S0  = 5'h8;

@@ -23,11 +23,13 @@ module dm #(
         `include "debug/rtl/header.v"
 
         integer i;
-        localparam ROM_SIZE = 'h200;
-        localparam ROM_SET_GPR_ADDR = 'h110;
-        localparam ROM_GET_GPR_ADDR = 'h148;
-        localparam ROM_SET_CSR_ADDR = 'h170;
-        localparam ROM_GET_CSR_ADDR = 'h194;
+        localparam ROM_SIZE = 'h400;
+        localparam ROM_SET_GPR_ADDR = 'h120;
+        localparam ROM_GET_GPR_ADDR = 'h158;
+        localparam ROM_SET_CSR_ADDR = 'h180;
+        localparam ROM_GET_CSR_ADDR = 'h1a4;
+        localparam ROM_SET_MEM_ADDR = 'h1c8;
+        localparam ROM_GET_MEM_ADDR = 'h1e4;
 
 
         reg  [ 7:0] rom_file [0:ROM_SIZE-1];
@@ -42,10 +44,10 @@ module dm #(
                 for (gi = 0; gi < ROM_SIZE; gi = gi + 4) begin
                         if (gi == ROM_SET_GPR_ADDR) begin
                                 assign rom[gi/4] = (specific_reg<<7) | {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
-                        end else if (gi == ROM_GET_GPR_ADDR) begin
+                        end else if (gi == ROM_GET_GPR_ADDR || gi == ROM_SET_CSR_ADDR || gi == ROM_GET_CSR_ADDR) begin
                                 assign rom[gi/4] = (specific_reg<<20) | {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
-                        end else if (gi == ROM_SET_CSR_ADDR || gi == ROM_GET_CSR_ADDR) begin
-                                assign rom[gi/4] = (specific_reg<<20) | {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
+                        end else if (gi == ROM_SET_MEM_ADDR || gi == ROM_GET_MEM_ADDR) begin
+                                assign rom[gi/4] = (specific_reg<<12) | {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
                         end else begin
                                 assign rom[gi/4] = {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
                         end
@@ -128,6 +130,10 @@ module dm #(
                                                 else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_CSR);
                                         end
                                 end
+                        end else if(dmi_wdata[`CMDTYPE_RANGE]==CMDTYPE_ACCESSMEM) begin
+                                specific_reg <= dmi_wdata[21:20];
+                                if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_MEM);
+                                else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_MEM);
                         end
                 end else if (bus_match_write(BUS_ADDR_DM_REQUEST)) begin
                         dm_request <= `DMREG_WIDTH'h0;
@@ -192,7 +198,7 @@ module dm #(
                 if(!resetn) begin
                         bus_rdata <= 0;
                 end else if (bus_valid && !bus_write) begin
-                        if({bus_addr,2'h0}<'h200) begin
+                        if({bus_addr,2'h0} < ROM_SIZE) begin
                                 bus_rdata <= rom[bus_addr];
                         end else if({bus_addr,2'h0} == BUS_ADDR_DM_REQUEST) begin
                                 bus_rdata <= dm_request;
