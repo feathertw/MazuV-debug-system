@@ -23,7 +23,7 @@ module dm #(
         `include "debug/rtl/header.v"
 
         integer i;
-        localparam ROM_SIZE = 'h400;
+        localparam ROM_SIZE = 'h208;
         localparam ROM_SET_GPR_ADDR = 'h120;
         localparam ROM_GET_GPR_ADDR = 'h158;
         localparam ROM_SET_CSR_ADDR = 'h180;
