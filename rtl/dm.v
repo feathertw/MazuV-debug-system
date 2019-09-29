@@ -12,7 +12,7 @@ module dm #(
 	input             bus_valid,
 	output reg        bus_ready,
 	input             bus_write,
-	input   [19:2]    bus_addr,
+	input   [19:0]    bus_addr,
 	input   [31:0]    bus_wdata,
 	output reg [31:0] bus_rdata,
 
@@ -22,42 +22,23 @@ module dm #(
 
         `include "debug/rtl/header.v"
 
-        integer i;
-        localparam ROM_SIZE = 'h208;
-        localparam ROM_SET_GPR_ADDR = 'h11c; //zero
-        localparam ROM_GET_GPR_ADDR = 'h154; //zero
-        localparam ROM_SET_CSR_ADDR = 'h17c; //ustatus
-        localparam ROM_GET_CSR_ADDR = 'h1a0; //ustatus
-        localparam ROM_SET_MEM_ADDR = 'h1c4; //sb
-        localparam ROM_GET_MEM_ADDR = 'h1e0; //lb
+        wire [`DMREG_RANGE] dm_rom_rdata;
+        reg [11:0] instr_fix;
+        parameter ROM_SIZE = 'h204;
+        dm_rom #(
+                .ROM_SIZE(ROM_SIZE)
+        ) dm_rom (
+                .instr_fix(instr_fix),
+                .addr(bus_addr[9:0]),
+                .rdata(dm_rom_rdata)
 
-
-        reg  [ 7:0] rom_file [0:ROM_SIZE-1];
-        wire [31:0] rom      [0:ROM_SIZE/4-1];
-        initial begin
-                $readmemh("debug/src/dm_rom.hex", rom_file);
-        end
-
-        reg [11:0] specific_reg;
-        genvar gi;
-        generate
-                for (gi = 0; gi < ROM_SIZE; gi = gi + 4) begin
-                        if (gi == ROM_SET_GPR_ADDR) begin
-                                assign rom[gi/4] = (specific_reg<<7) | {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
-                        end else if (gi == ROM_GET_GPR_ADDR || gi == ROM_SET_CSR_ADDR || gi == ROM_GET_CSR_ADDR) begin
-                                assign rom[gi/4] = (specific_reg<<20) | {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
-                        end else if (gi == ROM_SET_MEM_ADDR || gi == ROM_GET_MEM_ADDR) begin
-                                assign rom[gi/4] = (specific_reg<<12) | {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
-                        end else begin
-                                assign rom[gi/4] = {rom_file[gi+3],rom_file[gi+2],rom_file[gi+1],rom_file[gi+0]};
-                        end
-                end
-        endgenerate
+        );
 
         wire dmi_match = dmi_valid && dmi_ready;
         assign interrupt = haltreq ;
 
         reg [31:0] dm_register [0:2**7-1];
+        integer i;
         always @* begin
                 for (i=0; i<2**7; i=i+1) begin
                         dm_register[i] = 32'h0;
@@ -111,7 +92,7 @@ module dm #(
                                 if(REGNO_FPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
 
                                 end else if(REGNO_GPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
-                                        specific_reg <= dmi_wdata[4:0];
+                                        instr_fix <= dmi_wdata[4:0];
                                         if(dmi_wdata[`REGNO_RANGE]==REGNO_GPR_BASE+GPR_S0) begin
                                                 if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_S0);
                                                 else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_S0);
@@ -123,7 +104,7 @@ module dm #(
                                                 else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_GPR);
                                         end
                                 end else begin
-                                        specific_reg <= dmi_wdata[11:0];
+                                        instr_fix <= dmi_wdata[11:0];
                                         if(dmi_wdata[`REGNO_RANGE]==REGNO_CSR_BASE+CSR_DPC) begin
                                                 if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_DPC);
                                                 else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_DPC);
@@ -133,7 +114,7 @@ module dm #(
                                         end
                                 end
                         end else if(dmi_wdata[`CMDTYPE_RANGE]==CMDTYPE_ACCESSMEM) begin
-                                specific_reg <= dmi_wdata[21:20];
+                                instr_fix <= dmi_wdata[21:20];
                                 if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_MEM);
                                 else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_MEM);
                         end
@@ -200,13 +181,13 @@ module dm #(
                 if(!resetn) begin
                         bus_rdata <= 0;
                 end else if (bus_valid && !bus_write) begin
-                        if({bus_addr,2'h0} < ROM_SIZE) begin
-                                bus_rdata <= rom[bus_addr];
-                        end else if({bus_addr,2'h0} == BUS_ADDR_DM_REQUEST) begin
+                        if(bus_addr < ROM_SIZE) begin
+                                bus_rdata <= dm_rom_rdata;
+                        end else if(bus_addr == BUS_ADDR_DM_REQUEST) begin
                                 bus_rdata <= dm_request;
-                        end else if({bus_addr,2'h0} == BUS_ADDR_DATA0) begin
+                        end else if(bus_addr == BUS_ADDR_DATA0) begin
                                 bus_rdata <= data0;
-                        end else if({bus_addr,2'h0} == BUS_ADDR_DATA1) begin
+                        end else if(bus_addr == BUS_ADDR_DATA1) begin
                                 bus_rdata <= data1;
                         end
                 end
@@ -242,7 +223,7 @@ module dm #(
         function bus_match_write;
                 input [19:0] addr;
                 begin
-                        bus_match_write = bus_match && bus_write && {bus_addr,2'h0}==addr;
+                        bus_match_write = bus_match && bus_write && bus_addr==addr;
                 end
         endfunction
 endmodule
