@@ -24,12 +24,12 @@ module dm #(
 
         integer i;
         localparam ROM_SIZE = 'h208;
-        localparam ROM_SET_GPR_ADDR = 'h120;
-        localparam ROM_GET_GPR_ADDR = 'h158;
-        localparam ROM_SET_CSR_ADDR = 'h180;
-        localparam ROM_GET_CSR_ADDR = 'h1a4;
-        localparam ROM_SET_MEM_ADDR = 'h1c8;
-        localparam ROM_GET_MEM_ADDR = 'h1e4;
+        localparam ROM_SET_GPR_ADDR = 'h11c; //zero
+        localparam ROM_GET_GPR_ADDR = 'h154; //zero
+        localparam ROM_SET_CSR_ADDR = 'h17c; //ustatus
+        localparam ROM_GET_CSR_ADDR = 'h1a0; //ustatus
+        localparam ROM_SET_MEM_ADDR = 'h1c4; //sb
+        localparam ROM_GET_MEM_ADDR = 'h1e0; //lb
 
 
         reg  [ 7:0] rom_file [0:ROM_SIZE-1];
@@ -70,6 +70,7 @@ module dm #(
                 dm_register[DMI_ADDR_DMSTATUS][`ANYRUNNING_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ALLHALTED_RANGE]  =  hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ANYHALTED_RANGE]  =  hart_halt[hartsel];
+                dm_register[DMI_ADDR_ABSTRACTCS][`BUSY_RANGE]     =  busy;
         end
 
         reg [`HARTSEL_RANGE] hartsel;
@@ -97,6 +98,7 @@ module dm #(
                 end
         end
 
+        wire [`BUSY_RANGE] busy = |dm_request[`REQUEST_NUMBER_RANGE];
         // dm_request: [31]==valid, [25:20]==number, [19:0]==hartid
         reg [`DMREG_RANGE] dm_request;
         always @(posedge clk) begin

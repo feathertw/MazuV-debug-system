@@ -1,3 +1,6 @@
+# ** When modify the dm_rom code
+# ** make sure dm fix instruction wire signal corespond to correct address
+
 debug_vector_entry:
         j debug_main
         j debug_exception
@@ -29,8 +32,7 @@ check_request:
         srli    s0, s0, 20
         andi    s0, s0, 0x3f
 
-        li      s1, 1
-        beq     s0, s1, request_resume
+        beq     s0, x0, request_resume
         li      s1, 2
         beq     s0, s1, request_set_s0
         li      s1, 3
