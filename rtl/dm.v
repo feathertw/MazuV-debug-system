@@ -183,12 +183,12 @@ module dm #(
                 end else if (bus_valid && !bus_write) begin
                         if(bus_addr < ROM_SIZE) begin
                                 bus_rdata <= dm_rom_rdata;
-                        end else if(bus_addr == BUS_ADDR_DM_REQUEST) begin
-                                bus_rdata <= dm_request;
-                        end else if(bus_addr == BUS_ADDR_DATA0) begin
-                                bus_rdata <= data0;
-                        end else if(bus_addr == BUS_ADDR_DATA1) begin
-                                bus_rdata <= data1;
+                        end else begin
+                                case(bus_addr)
+                                BUS_ADDR_DM_REQUEST: bus_rdata <= dm_request;
+                                BUS_ADDR_DATA0:      bus_rdata <= data0;
+                                BUS_ADDR_DATA1:      bus_rdata <= data1;
+                                endcase
                         end
                 end
         end
