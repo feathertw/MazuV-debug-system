@@ -244,7 +244,7 @@ module dm #(
                 end
         endfunction
         function dmi_match_write;
-                input [6:0] addr;
+                input [8:2] addr;
                 begin
                         dmi_match_write = dmi_match && dmi_write && dmi_addr==addr;
                 end
