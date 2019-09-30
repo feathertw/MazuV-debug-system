@@ -135,8 +135,7 @@ request_get_mem:
 
 request_complete:
         la      s0, dm_request
-        csrr    s1, mhartid
-        sw      s1, 0(s0)
+        sw      x0, 0(s0)
         j       check_valid
 finish_rom:
 1:      j       1b

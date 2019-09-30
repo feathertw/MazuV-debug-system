@@ -19,7 +19,7 @@ module dm #(
 	input resetn,
 	input clk
 );
-        localparam ROM_SIZE = 'h204;
+        localparam ROM_SIZE = 'h200;
 
         `include "debug/rtl/header.v"
 
