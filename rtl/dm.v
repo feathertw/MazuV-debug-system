@@ -52,6 +52,7 @@ module dm #(
         // For bus address read data
         wire [`DMREG_RANGE] dm_rom_rdata;
         reg  [11:0] instr_fix;
+        reg  [11:0] instr_fix_reg;
         dm_rom #(
                 .ROM_SIZE(ROM_SIZE)
         ) dm_rom (
@@ -163,42 +164,70 @@ module dm #(
                         hart_halt[bus_wdata] <= 0;
                 end
         end
+
+        reg [`DMREG_RANGE] dm_request_reg;
+        reg [`DMREG_RANGE] dm_request_gpr;
+        reg [`DMREG_RANGE] dm_request_csr;
+        reg [`DMREG_RANGE] dm_request_mem;
+        always @* begin
+                if(dmi_wdata[`REGNO_RANGE]==REGNO_GPR_BASE+GPR_S0) begin
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_S0);
+                        else                         dm_request_gpr = dm_request_next(REQUEST_NUMBER_GET_S0);
+                end else if(dmi_wdata[`REGNO_RANGE]==REGNO_GPR_BASE+GPR_S1) begin
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_S1);
+                        else                         dm_request_gpr = dm_request_next(REQUEST_NUMBER_GET_S1);
+                end else begin
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_GPR);
+                        else                         dm_request_gpr = dm_request_next(REQUEST_NUMBER_GET_GPR);
+                end
+        end
+        always @* begin
+                if(dmi_wdata[`REGNO_RANGE]==REGNO_CSR_BASE+CSR_DPC) begin
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_csr = dm_request_next(REQUEST_NUMBER_SET_DPC);
+                        else                         dm_request_csr = dm_request_next(REQUEST_NUMBER_GET_DPC);
+                end else begin
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_csr = dm_request_next(REQUEST_NUMBER_SET_CSR);
+                        else                         dm_request_csr = dm_request_next(REQUEST_NUMBER_GET_CSR);
+                end
+        end
+        always @* begin
+                if(dmi_wdata[`WRITE_RANGE])  dm_request_mem = dm_request_next(REQUEST_NUMBER_SET_MEM);
+                else                         dm_request_mem = dm_request_next(REQUEST_NUMBER_GET_MEM);
+        end
+        always @* begin
+                instr_fix_reg   = 'bx;
+                dm_request_reg  = 'bx;
+                if(dmi_wdata[`TRANSFER_RANGE]) begin
+                        if(REGNO_FPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
+
+                        end else if(REGNO_GPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
+                                instr_fix_reg  = dmi_wdata[4:0];
+                                dm_request_reg = dm_request_gpr;
+                        end else begin
+                                instr_fix_reg  = dmi_wdata[11:0];
+                                dm_request_reg = dm_request_csr;
+                        end
+                end
+        end
         always @(posedge clk) begin
                 if(!resetn) begin
                         dm_request <= 0;
+                        instr_fix  <= 0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`RESUMEREQ_RANGE]) begin
                         dm_request <= dm_request_next(REQUEST_NUMBER_RESUME);
                 end else if(dmi_match_write(DMI_ADDR_COMMAND)) begin
-                        if(dmi_wdata[`CMDTYPE_RANGE]==CMDTYPE_ACCESSREG && dmi_wdata[`TRANSFER_RANGE]) begin
-                                if(REGNO_FPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
-
-                                end else if(REGNO_GPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
-                                        instr_fix <= dmi_wdata[4:0];
-                                        if(dmi_wdata[`REGNO_RANGE]==REGNO_GPR_BASE+GPR_S0) begin
-                                                if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_S0);
-                                                else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_S0);
-                                        end else if(dmi_wdata[`REGNO_RANGE]==REGNO_GPR_BASE+GPR_S1) begin
-                                                if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_S1);
-                                                else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_S1);
-                                        end else begin
-                                                if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_GPR);
-                                                else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_GPR);
-                                        end
-                                end else begin
-                                        instr_fix <= dmi_wdata[11:0];
-                                        if(dmi_wdata[`REGNO_RANGE]==REGNO_CSR_BASE+CSR_DPC) begin
-                                                if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_DPC);
-                                                else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_DPC);
-                                        end else begin
-                                                if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_CSR);
-                                                else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_CSR);
-                                        end
+                        case(dmi_wdata[`CMDTYPE_RANGE])
+                                CMDTYPE_ACCESSREG: begin
+                                        instr_fix  <= instr_fix_reg;
+                                        dm_request <= dm_request_reg;
                                 end
-                        end else if(dmi_wdata[`CMDTYPE_RANGE]==CMDTYPE_ACCESSMEM) begin
-                                instr_fix <= dmi_wdata[21:20];
-                                if(dmi_wdata[`WRITE_RANGE])  dm_request <= dm_request_next(REQUEST_NUMBER_SET_MEM);
-                                else                         dm_request <= dm_request_next(REQUEST_NUMBER_GET_MEM);
-                        end
+                                CMDTYPE_QUICKACCESS:begin
+                                end
+                                CMDTYPE_ACCESSMEM:begin
+                                        instr_fix  <= dmi_wdata[21:20];
+                                        dm_request <= dm_request_mem;
+                                end
+                        endcase
                 end else if (bus_match_write(BUS_ADDR_DM_REQUEST)) begin
                         dm_request <= `DMREG_WIDTH'h0;
                 end
