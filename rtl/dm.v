@@ -20,6 +20,7 @@ module dm #(
 	input clk
 );
         localparam ROM_SIZE = 'h200;
+        localparam DMREG_SIZE = 'h41;
 
         `include "debug/rtl/header.v"
 
@@ -79,9 +80,9 @@ module dm #(
 
 
         // For DMI address read data
-        reg [`DMREG_RANGE] dm_register [0:2**7-1];
+        reg [`DMREG_RANGE] dm_register [0:DMREG_SIZE-1];
         always @* begin
-                for (i=0; i<2**7; i=i+1) begin
+                for (i=0; i<DMREG_SIZE; i=i+1) begin
                         dm_register[i] = 32'h0;
                 end
                 dm_register[DMI_ADDR_DATA0] = data0;
