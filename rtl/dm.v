@@ -93,6 +93,7 @@ module dm #(
                 dm_register[DMI_ADDR_DMSTATUS][`ALLHALTED_RANGE]  =  hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ANYHALTED_RANGE]  =  hart_halt[hartsel];
                 dm_register[DMI_ADDR_ABSTRACTCS][`BUSY_RANGE]     =  busy;
+                dm_register[DMI_ADDR_ABSTRACTCS][`CMDERR_RANGE]   =  cmderr;
         end
         always @(posedge clk) begin
                 if(!resetn) begin
@@ -109,9 +110,19 @@ module dm #(
         reg [`HARTSEL_RANGE]  hartsel;
         reg [`HALTREQ_RANGE]  haltreq;
         reg [`DMACTIVE_RANGE] dmactive;
+        reg [`CMDERR_RANGE]   cmderr;
         reg [`DMREG_RANGE] data0;
         reg [`DMREG_RANGE] data1;
 
+        always @(posedge clk) begin
+                if(!resetn) begin
+                        cmderr <= CMDERR_NONE;
+                end else if(dmi_match_write(DMI_ADDR_COMMAND) && dmi_wdata[`CMDTYPE_RANGE]==CMDTYPE_ACCESSREG && dmi_wdata[`AARSIZE_RANGE]!=AARSIZE_32BITS) begin
+                        cmderr <= CMDERR_EXCEPTION;
+                end else if(dmi_match_write(DMI_ADDR_ABSTRACTCS) && (&dmi_wdata[`CMDERR_RANGE])) begin
+                        cmderr <= CMDERR_NONE;
+                end
+        end
         always @(posedge clk) begin if(!resetn) begin
                         dmactive <= `DMACTIVE_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
@@ -195,9 +206,9 @@ module dm #(
                 else                         dm_request_mem = dm_request_next(REQUEST_NUMBER_GET_MEM);
         end
         always @* begin
-                instr_fix_reg   = 'bx;
-                dm_request_reg  = 'bx;
-                if(dmi_wdata[`TRANSFER_RANGE]) begin
+                instr_fix_reg   = 'b0;
+                dm_request_reg  = `DMREG_WIDTH'h0;
+                if(dmi_wdata[`TRANSFER_RANGE] && dmi_wdata[`AARSIZE_RANGE]==AARSIZE_32BITS) begin
                         if(REGNO_FPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
 
                         end else if(REGNO_GPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
@@ -215,7 +226,7 @@ module dm #(
                         instr_fix  <= 0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`RESUMEREQ_RANGE]) begin
                         dm_request <= dm_request_next(REQUEST_NUMBER_RESUME);
-                end else if(dmi_match_write(DMI_ADDR_COMMAND)) begin
+                end else if(dmi_match_write(DMI_ADDR_COMMAND) && (cmderr==CMDERR_NONE)) begin
                         case(dmi_wdata[`CMDTYPE_RANGE])
                                 CMDTYPE_ACCESSREG: begin
                                         instr_fix  <= instr_fix_reg;

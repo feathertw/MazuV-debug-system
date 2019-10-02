@@ -160,6 +160,14 @@ parameter DATACOUNT_LSB    =  0;
 `define CMDERR_RANGE       CMDERR_MSB:CMDERR_LSB
 `define DATACOUNT_RANGE    DATACOUNT_MSB:DATACOUNT_LSB
 
+parameter CMDERR_NONE           = `CMDERR_WIDTH'h0;
+parameter CMDERR_BUSY           = `CMDERR_WIDTH'h1;
+parameter CMDERR_NOTSUPPORTED   = `CMDERR_WIDTH'h2;
+parameter CMDERR_EXCEPTION      = `CMDERR_WIDTH'h3;
+parameter CMDERR_HALTRESUME     = `CMDERR_WIDTH'h4;
+parameter CMDERR_BUS            = `CMDERR_WIDTH'h5;
+parameter CMDERR_OTHER          = `CMDERR_WIDTH'h7;
+
 // COMMAND
 parameter CMDTYPE_MSB           = 31;
 parameter CMDTYPE_LSB           = 24;
