@@ -30,6 +30,9 @@ while orignal:
         elif "csrwdpc,s1" in new:     print  "        picorv32_setq_insn(0, 9)"
         elif "csrrs1,dpc" in new:     print  "        picorv32_getq_insn(9, 0)"
 
+        elif "csrw0x000,s1" in new:   print  "        nop"
+        elif "csrrs1,0x000" in new:   print  "        addi    s1, x0, 0"
+
         elif "dret" in new:           print  "        picorv32_retirq_insn()"
         elif "csrrs1,mhartid" in new: print  "        addi    s1, x0, 0"
         else: print orignal[:-1]
