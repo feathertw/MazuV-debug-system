@@ -88,12 +88,15 @@ module dm #(
                 dm_register[DMI_ADDR_DATA1] = data1;
                 dm_register[DMI_ADDR_DMCONTROL][`HALTREQ_RANGE]   =  haltreq;
                 dm_register[DMI_ADDR_DMCONTROL][`DMACTIVE_RANGE]  =  dmactive;
+                dm_register[DMI_ADDR_DMSTATUS][`ALLRESUMEACK_RANGE] = ~hart_halt[hartsel];
+                dm_register[DMI_ADDR_DMSTATUS][`ANYRESUMEACK_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ALLRUNNING_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ANYRUNNING_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ALLHALTED_RANGE]  =  hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ANYHALTED_RANGE]  =  hart_halt[hartsel];
                 dm_register[DMI_ADDR_ABSTRACTCS][`BUSY_RANGE]     =  busy;
                 dm_register[DMI_ADDR_ABSTRACTCS][`CMDERR_RANGE]   =  cmderr;
+                dm_register[DMI_ADDR_ABSTRACTCS][`DATACOUNT_RANGE]=  `DATACOUNT_WIDTH'h2;
         end
         always @(posedge clk) begin
                 if(!resetn) begin
