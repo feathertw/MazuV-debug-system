@@ -95,6 +95,7 @@ module dm #(
                 dm_register[DMI_ADDR_DMSTATUS][`ANYRUNNING_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ALLHALTED_RANGE]  =  hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ANYHALTED_RANGE]  =  hart_halt[hartsel];
+                dm_register[DMI_ADDR_DMSTATUS][`AUTHENTICATED_RANGE]  = `AUTHENTICATED_WIDTH'h1;
                 dm_register[DMI_ADDR_ABSTRACTCS][`BUSY_RANGE]     =  busy;
                 dm_register[DMI_ADDR_ABSTRACTCS][`CMDERR_RANGE]   =  cmderr;
                 dm_register[DMI_ADDR_ABSTRACTCS][`DATACOUNT_RANGE]=  `DATACOUNT_WIDTH'h2;
