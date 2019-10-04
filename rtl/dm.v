@@ -2,6 +2,8 @@ module dm #(
 	parameter NUM_HART = 1
 ) (
         output            interrupt,
+        output reg        ndmreset,
+
         input             dmi_valid,
         output reg        dmi_ready,
         input             dmi_write,
@@ -88,7 +90,10 @@ module dm #(
                 dm_register[DMI_ADDR_DATA0] = data0;
                 dm_register[DMI_ADDR_DATA1] = data1;
                 dm_register[DMI_ADDR_DMCONTROL][`HALTREQ_RANGE]   =  haltreq;
+                dm_register[DMI_ADDR_DMCONTROL][`NDMRESET_RANGE]  =  ndmreset;
                 dm_register[DMI_ADDR_DMCONTROL][`DMACTIVE_RANGE]  =  dmactive;
+                dm_register[DMI_ADDR_DMSTATUS][`ALLHAVERESET_RANGE] = hart_havereset;
+                dm_register[DMI_ADDR_DMSTATUS][`ANYHAVERESET_RANGE] = hart_havereset;
                 dm_register[DMI_ADDR_DMSTATUS][`ALLRESUMEACK_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ANYRESUMEACK_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ALLRUNNING_RANGE] = ~hart_halt[hartsel];
@@ -129,7 +134,14 @@ module dm #(
                         cmderr <= CMDERR_NONE;
                 end
         end
-        always @(posedge clk) begin if(!resetn) begin
+        always @(posedge clk) begin
+                if(!resetn) begin
+                        ndmreset <= `NDMRESET_WIDTH'h0;
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
+                        ndmreset <= dmi_wdata[`NDMRESET_RANGE];
+                end
+
+                if(!resetn) begin
                         dmactive <= `DMACTIVE_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
                         dmactive <= dmi_wdata[`DMACTIVE_RANGE];
@@ -171,10 +183,20 @@ module dm #(
         end
 
         // For dm internal using register
+        reg hart_havereset;
         reg [NUM_HART-1:0] hart_halt;
         reg [`DMREG_RANGE] dm_request;
         reg [`AAMPOSTINCREMENT_RANGE] aampostincrement;
 
+        always @(posedge clk) begin
+                if(!resetn) begin
+                        hart_havereset <= `ACKHAVERESET_WIDTH'h0;
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`ACKHAVERESET_RANGE]) begin
+                        hart_havereset <= `ACKHAVERESET_WIDTH'h0;
+                end else if (ndmreset)begin
+                        hart_havereset <= `ACKHAVERESET_WIDTH'h1;
+                end
+        end
         always @(posedge clk) begin
                 if(!resetn) begin
                         hart_halt <= 0;
