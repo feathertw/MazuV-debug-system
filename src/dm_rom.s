@@ -6,11 +6,14 @@ debug_vector_entry:
         j debug_exception
 
 debug_exception:
-        nop
+        la      s0, core_exception
+        sw      x0, 0(s0)
+        j       hart_halt
 
 debug_main:
         csrw    0x7b2, s0
         csrw    0x7b3, s1
+hart_halt:
         la      s0, core_halt
         csrr    s1, mhartid
         sw      s1, 0(s0)
@@ -71,52 +74,52 @@ request_resume:
 
 request_set_s0:
         la      s0, dm_data0
-        lw      s1, 0(s0)
+        lb      s1, 0(s0)
         csrw    0x7b2, s1
         j       request_complete
 request_set_s1:
         la      s0, dm_data0
-        lw      s1, 0(s0)
+        lb      s1, 0(s0)
         csrw    0x7b3, s1
         j       request_complete
 request_set_gpr:
         la      s0, dm_data0
-        lw      x0, 0(s0) ###
+        lb      x0, 0(s0) ###
         j       request_complete
 request_get_s0:
         la      s0, dm_data0
         csrr    s1, 0x7b2
-        sw      s1, 0(s0)
+        sb      s1, 0(s0)
         j       request_complete
 request_get_s1:
         la      s0, dm_data0
         csrr    s1, 0x7b3
-        sw      s1, 0(s0)
+        sb      s1, 0(s0)
         j       request_complete
 request_get_gpr:
         la      s0, dm_data0
-        sw      x0, 0(s0) ###
+        sb      x0, 0(s0) ###
         j       request_complete
 
 request_set_dpc:
         la      s0, dm_data0
-        lw      s1, 0(s0)
+        lb      s1, 0(s0)
         csrw    dpc, s1
         j       request_complete
 request_set_csr:
         la      s0, dm_data0
-        lw      s1, 0(s0)
+        lb      s1, 0(s0)
         csrw    0x000, s1 ###
         j       request_complete
 request_get_dpc:
         la      s0, dm_data0
         csrr    s1, dpc
-        sw      s1, 0(s0)
+        sb      s1, 0(s0)
         j       request_complete
 request_get_csr:
         la      s0, dm_data0
         csrr    s1, 0x000 ###
-        sw      s1, 0(s0)
+        sb      s1, 0(s0)
         j       request_complete
 request_set_mem:
         la      s0, dm_data0

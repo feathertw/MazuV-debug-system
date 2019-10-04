@@ -21,7 +21,7 @@ module dm #(
 	input resetn,
 	input clk
 );
-        localparam ROM_SIZE = 'h200;
+        localparam ROM_SIZE = 'h20c;
         localparam DMREG_SIZE = 'h41;
 
         `include "debug/rtl/header.v"
@@ -54,12 +54,14 @@ module dm #(
 
         // For bus address read data
         wire [`DMREG_RANGE] dm_rom_rdata;
-        reg  [11:0] instr_fix;
-        reg  [11:0] instr_fix_reg;
+        reg  [11:0] fix_reg;
+        reg  [ 1:0] fix_size;
+        reg  [11:0] fix_reg_nx;
         dm_rom #(
                 .ROM_SIZE(ROM_SIZE)
         ) dm_rom (
-                .instr_fix(instr_fix),
+                .fix_reg(fix_reg),
+                .fix_size(fix_size),
                 .addr(bus_addr[9:0]),
                 .rdata(dm_rom_rdata)
 
@@ -128,7 +130,7 @@ module dm #(
         always @(posedge clk) begin
                 if(!resetn) begin
                         cmderr <= CMDERR_NONE;
-                end else if(dmi_match_write(DMI_ADDR_COMMAND) && dmi_wdata[`CMDTYPE_RANGE]==CMDTYPE_ACCESSREG && dmi_wdata[`AARSIZE_RANGE]!=AARSIZE_32BITS) begin
+                end else if(bus_match_write(BUS_ADDR_CORE_EXCEPTION)) begin
                         cmderr <= CMDERR_EXCEPTION;
                 end else if(dmi_match_write(DMI_ADDR_ABSTRACTCS) && (&dmi_wdata[`CMDERR_RANGE])) begin
                         cmderr <= CMDERR_NONE;
@@ -178,7 +180,7 @@ module dm #(
                 end else if (bus_match_write(BUS_ADDR_DATA1))begin
                         data1 <= bus_wdata;
                 end else if (bus_match_write(BUS_ADDR_DM_REQUEST) && aampostincrement) begin
-                        data1 <= data1 + (1'h1 <<instr_fix);
+                        data1 <= data1 + (1'h1 <<fix_size);
                 end
         end
 
@@ -237,16 +239,16 @@ module dm #(
                 else                         dm_request_mem = dm_request_next(REQUEST_NUMBER_GET_MEM);
         end
         always @* begin
-                instr_fix_reg   = 'b0;
+                fix_reg_nx   = 'b0;
                 dm_request_reg  = `DMREG_WIDTH'h0;
-                if(dmi_wdata[`TRANSFER_RANGE] && dmi_wdata[`AARSIZE_RANGE]==AARSIZE_32BITS) begin
+                if(dmi_wdata[`TRANSFER_RANGE]) begin
                         if(REGNO_FPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
 
                         end else if(REGNO_GPR_BASE <= dmi_wdata[`REGNO_RANGE]) begin
-                                instr_fix_reg  = dmi_wdata[4:0];
+                                fix_reg_nx  = dmi_wdata[4:0];
                                 dm_request_reg = dm_request_gpr;
                         end else begin
-                                instr_fix_reg  = dmi_wdata[11:0];
+                                fix_reg_nx  = dmi_wdata[11:0];
                                 dm_request_reg = dm_request_csr;
                         end
                 end
@@ -254,25 +256,26 @@ module dm #(
         always @(posedge clk) begin
                 if(!resetn) begin
                         dm_request <= 0;
-                        instr_fix  <= 0;
+                        fix_reg    <= 0;
+                        fix_size   <= 0;
                         aampostincrement <= `AAMPOSTINCREMENT_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`RESUMEREQ_RANGE]) begin
                         dm_request <= dm_request_next(REQUEST_NUMBER_RESUME);
                 end else if(dmi_match_write(DMI_ADDR_COMMAND) && (cmderr==CMDERR_NONE)) begin
+                        fix_size  <= dmi_wdata[21:20];
                         case(dmi_wdata[`CMDTYPE_RANGE])
                                 CMDTYPE_ACCESSREG: begin
-                                        instr_fix  <= instr_fix_reg;
+                                        fix_reg    <= fix_reg_nx;
                                         dm_request <= dm_request_reg;
                                 end
                                 CMDTYPE_QUICKACCESS:begin
                                 end
                                 CMDTYPE_ACCESSMEM:begin
-                                        instr_fix  <= dmi_wdata[21:20];
                                         dm_request <= dm_request_mem;
                                         aampostincrement <=  dmi_wdata[`AAMPOSTINCREMENT_RANGE];
                                 end
                         endcase
-                end else if (bus_match_write(BUS_ADDR_DM_REQUEST)) begin
+                end else if (bus_match_write(BUS_ADDR_DM_REQUEST)||bus_match_write(BUS_ADDR_CORE_EXCEPTION)) begin
                         dm_request <= `DMREG_WIDTH'h0;
                         aampostincrement <= `AAMPOSTINCREMENT_WIDTH'h0;
                 end
