@@ -165,12 +165,15 @@ module dm #(
                         data1 <= dmi_wdata;
                 end else if (bus_match_write(BUS_ADDR_DATA1))begin
                         data1 <= bus_wdata;
+                end else if (bus_match_write(BUS_ADDR_DM_REQUEST) && aampostincrement) begin
+                        data1 <= data1 + (1'h1 <<instr_fix);
                 end
         end
 
         // For dm internal using register
         reg [NUM_HART-1:0] hart_halt;
         reg [`DMREG_RANGE] dm_request;
+        reg [`AAMPOSTINCREMENT_RANGE] aampostincrement;
 
         always @(posedge clk) begin
                 if(!resetn) begin
@@ -230,6 +233,7 @@ module dm #(
                 if(!resetn) begin
                         dm_request <= 0;
                         instr_fix  <= 0;
+                        aampostincrement <= `AAMPOSTINCREMENT_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`RESUMEREQ_RANGE]) begin
                         dm_request <= dm_request_next(REQUEST_NUMBER_RESUME);
                 end else if(dmi_match_write(DMI_ADDR_COMMAND) && (cmderr==CMDERR_NONE)) begin
@@ -243,10 +247,12 @@ module dm #(
                                 CMDTYPE_ACCESSMEM:begin
                                         instr_fix  <= dmi_wdata[21:20];
                                         dm_request <= dm_request_mem;
+                                        aampostincrement <=  dmi_wdata[`AAMPOSTINCREMENT_RANGE];
                                 end
                         endcase
                 end else if (bus_match_write(BUS_ADDR_DM_REQUEST)) begin
                         dm_request <= `DMREG_WIDTH'h0;
+                        aampostincrement <= `AAMPOSTINCREMENT_WIDTH'h0;
                 end
         end
 
