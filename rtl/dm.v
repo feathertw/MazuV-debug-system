@@ -96,8 +96,8 @@ module dm #(
                 dm_register[DMI_ADDR_DMCONTROL][`DMACTIVE_RANGE]  =  dmactive;
                 dm_register[DMI_ADDR_DMSTATUS][`ALLHAVERESET_RANGE] = hart_havereset;
                 dm_register[DMI_ADDR_DMSTATUS][`ANYHAVERESET_RANGE] = hart_havereset;
-                dm_register[DMI_ADDR_DMSTATUS][`ALLRESUMEACK_RANGE] = ~hart_halt[hartsel];
-                dm_register[DMI_ADDR_DMSTATUS][`ANYRESUMEACK_RANGE] = ~hart_halt[hartsel];
+                dm_register[DMI_ADDR_DMSTATUS][`ALLRESUMEACK_RANGE] = hart_resumeack[hartsel];
+                dm_register[DMI_ADDR_DMSTATUS][`ANYRESUMEACK_RANGE] = hart_resumeack[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ALLRUNNING_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ANYRUNNING_RANGE] = ~hart_halt[hartsel];
                 dm_register[DMI_ADDR_DMSTATUS][`ALLHALTED_RANGE]  =  hart_halt[hartsel];
@@ -118,6 +118,8 @@ module dm #(
 
 
 
+
+        wire [`HARTSEL_RANGE] dmi_wdata_hartsel = {dmi_wdata[`HARTSELHI_RANGE],dmi_wdata[`HARTSELLO_RANGE]};
 
         // For dm register
         reg [`HARTSEL_RANGE]  hartsel;
@@ -160,7 +162,7 @@ module dm #(
                 if(!resetn || !dmactive) begin
                         hartsel <= `HARTSEL_WIDTH'h0;
                 end else if(dmi_match_write(DMI_ADDR_DMCONTROL)) begin
-                        hartsel <= {dmi_wdata[`HARTSELHI_RANGE],dmi_wdata[`HARTSELLO_RANGE]};
+                        hartsel <= dmi_wdata_hartsel;
                 end
         end
         always @(posedge clk) begin
@@ -186,10 +188,20 @@ module dm #(
 
         // For dm internal using register
         reg hart_havereset;
+        reg [NUM_HART-1:0] hart_resumeack;
         reg [NUM_HART-1:0] hart_halt;
         reg [`DMREG_RANGE] dm_request;
         reg [`AAMPOSTINCREMENT_RANGE] aampostincrement;
 
+        always @(posedge clk) begin
+                if(!resetn) begin
+                        hart_resumeack <= 0;
+                end else if(dmi_match_write(DMI_ADDR_DMCONTROL) && dmi_wdata[`RESUMEREQ_RANGE]) begin
+                        hart_resumeack[dmi_wdata_hartsel] <= `RESUMEREQ_WIDTH'h0;
+                end else if(bus_match_write(BUS_ADDR_CORE_RESUME)) begin
+                        hart_resumeack[bus_wdata] <= `RESUMEREQ_WIDTH'h1;
+                end
+        end
         always @(posedge clk) begin
                 if(!resetn) begin
                         hart_havereset <= `ACKHAVERESET_WIDTH'h0;
