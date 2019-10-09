@@ -62,21 +62,21 @@ request_resume:
 
 request_set_gpr:
         la      s0, dm_data0
-        lb      x0, 0(s0) ###
+        lb      x0, 0(s0)
         j       request_complete
 request_get_gpr:
         la      s0, dm_data0
-        sb      x0, 0(s0) ###
+        sb      x0, 0(s0)
         j       request_complete
 
 request_set_csr:
         la      s0, dm_data0
         lb      s1, 0(s0)
-        csrw    0x000, s1 ###
+        csrw    0x000, s1
         j       request_complete
 request_get_csr:
         la      s0, dm_data0
-        csrr    s1, 0x000 ###
+        csrr    s1, 0x000
         sb      s1, 0(s0)
         j       request_complete
 request_set_mem:
@@ -84,13 +84,13 @@ request_set_mem:
         la      s1, dm_data1
         lw      s0, 0(s0)
         lw      s1, 0(s1)
-        sb      s0, 0(s1) ###
+        sb      s0, 0(s1)
         j       request_complete
 request_get_mem:
         la      s0, dm_data0
         la      s1, dm_data1
         lw      s1, 0(s1)
-        lb      s1, 0(s1) ###
+        lb      s1, 0(s1)
         sw      s1, 0(s0)
         j       request_complete
 
