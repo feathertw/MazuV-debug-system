@@ -1,3 +1,21 @@
+#define r_type_insn(_f7, _rs2, _rs1, _f3, _rd, _opc) \
+.word (((_f7) << 25) | ((_rs2) << 20) | ((_rs1) << 15) | ((_f3) << 12) | ((_rd) << 7) | ((_opc) << 0))
+
+#define picorv32_getq_insn(_rd, _qs) \
+r_type_insn(0b0000000, 0, _qs, 0b100, _rd, 0b0001011)
+
+#define picorv32_setq_insn(_qd, _rs) \
+r_type_insn(0b0000001, 0, _rs, 0b010, _qd, 0b0001011)
+
+#define picorv32_retirq_insn() \
+r_type_insn(0b0000010, 0, 0, 0b000, 0, 0b0001011)
+
+#define picorv32_maskirq_insn(_rd, _rs) \
+r_type_insn(0b0000011, 0, _rs, 0b110, _rd, 0b0001011)
+
+
+
+
 # ** When modify the dm_rom code
 # ** make sure dm fix instruction wire signal corespond to correct address
 
@@ -11,11 +29,11 @@ debug_exception:
         j       hart_halt
 
 debug_main:
-        csrw    0x7b2, s0
-        csrw    0x7b3, s1
+        picorv32_setq_insn(2, 8)
+        picorv32_setq_insn(3, 9)
 hart_halt:
         la      s0, core_halt
-        csrr    s1, mhartid
+        addi    s1, x0, 0
         sw      s1, 0(s0)
 
 check_valid:
@@ -26,7 +44,7 @@ check_valid:
 check_hart:
         li      s1, 0xfffff
         and     s0, s0, s1
-        csrr    s1, mhartid
+        addi    s1, x0, 0
         bne     s0, s1, check_valid
 
 check_request:
@@ -36,47 +54,92 @@ check_request:
         andi    s0, s0, 0x3f
 
         beq     s0, x0, request_resume
-        li      s1, 1
-        beq     s0, s1, request_set_gpr
         li      s1, 2
-        beq     s0, s1, request_get_gpr
+        beq     s0, s1, request_set_s0
         li      s1, 3
-        beq     s0, s1, request_set_csr
+        beq     s0, s1, request_set_s1
         li      s1, 4
-        beq     s0, s1, request_get_csr
+        beq     s0, s1, request_set_gpr
         li      s1, 5
-        beq     s0, s1, request_set_mem
+        beq     s0, s1, request_get_s0
         li      s1, 6
+        beq     s0, s1, request_get_s1
+        li      s1, 7
+        beq     s0, s1, request_get_gpr
+        li      s1, 8
+        beq     s0, s1, request_set_dpc
+        li      s1, 9
+        beq     s0, s1, request_set_csr
+        li      s1, 10
+        beq     s0, s1, request_get_dpc
+        li      s1, 11
+        beq     s0, s1, request_get_csr
+        li      s1, 12
+        beq     s0, s1, request_set_mem
+        li      s1, 13
         beq     s0, s1, request_get_mem
 1:      j       1b
 
 request_resume:
-        csrr    s1, mhartid
+        addi    s1, x0, 0
         la      s0, core_resume
         sw      s1, 0(s0)
         la      s0, dm_request
         sw      s1, 0(s0)
-        csrr    s0, 0x7b2
-        csrr    s1, 0x7b3
-        dret
+        picorv32_getq_insn(8, 2)
+        picorv32_getq_insn(9, 3)
+        picorv32_retirq_insn()
 
+request_set_s0:
+        la      s0, dm_data0
+        lb      s1, 0(s0)
+        picorv32_setq_insn(2, 9)
+        j       request_complete
+request_set_s1:
+        la      s0, dm_data0
+        lb      s1, 0(s0)
+        picorv32_setq_insn(3, 9)
+        j       request_complete
 request_set_gpr:
         la      s0, dm_data0
         lb      x0, 0(s0)
+        j       request_complete
+request_get_s0:
+        la      s0, dm_data0
+        picorv32_getq_insn(9, 2)
+        sb      s1, 0(s0)
+        j       request_complete
+request_get_s1:
+        la      s0, dm_data0
+        picorv32_getq_insn(9, 3)
+        sb      s1, 0(s0)
         j       request_complete
 request_get_gpr:
         la      s0, dm_data0
         sb      x0, 0(s0)
         j       request_complete
 
+request_set_dpc:
+        la      s0, dm_data0
+        lb      s1, 0(s0)
+        picorv32_setq_insn(0, 9)
+        j       request_complete
 request_set_csr:
         la      s0, dm_data0
         lb      s1, 0(s0)
-        csrw    0x000, s1
+        andi    s1, s1, 0x7
+        ori     s1, s1, 0x3
+        not     s1, s1
+        picorv32_maskirq_insn(0, 9)
+        j       request_complete
+request_get_dpc:
+        la      s0, dm_data0
+        picorv32_getq_insn(9, 0)
+        sb      s1, 0(s0)
         j       request_complete
 request_get_csr:
         la      s0, dm_data0
-        csrr    s1, 0x000
+        addi    s1, x0, 0x40
         sb      s1, 0(s0)
         j       request_complete
 request_set_mem:

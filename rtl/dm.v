@@ -21,7 +21,7 @@ module dm #(
 	input resetn,
 	input clk
 );
-        localparam ROM_SIZE = 'h164;
+        localparam ROM_SIZE = 'h218;
         localparam DMREG_SIZE = 'h41;
 
         `include "debug/rtl/header.v"
@@ -229,13 +229,13 @@ module dm #(
         reg [`DMREG_RANGE] dm_request_mem;
         always @* begin
                 if(dmi_wdata[`REGNO_RANGE]==REGNO_GPR_BASE+GPR_S0) begin
-                        fix_reg_gpr  = 'h7b2;
-                        if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_CSR);
-                        else                         dm_request_gpr = dm_request_next(REQUEST_NUMBER_GET_CSR);
+                        fix_reg_gpr  = 'b0;
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_S0);
+                        else                         dm_request_gpr = dm_request_next(REQUEST_NUMBER_GET_S0);
                 end else if(dmi_wdata[`REGNO_RANGE]==REGNO_GPR_BASE+GPR_S1) begin
-                        fix_reg_gpr  = 'h7b3;
-                        if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_CSR);
-                        else                         dm_request_gpr = dm_request_next(REQUEST_NUMBER_GET_CSR);
+                        fix_reg_gpr  = 'b0;
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_S1);
+                        else                         dm_request_gpr = dm_request_next(REQUEST_NUMBER_GET_S1);
                 end else begin
                         fix_reg_gpr  = dmi_wdata[4:0];
                         if(dmi_wdata[`WRITE_RANGE])  dm_request_gpr = dm_request_next(REQUEST_NUMBER_SET_GPR);
@@ -244,8 +244,13 @@ module dm #(
         end
         always @* begin
                 fix_reg_csr  = dmi_wdata[11:0];
-                if(dmi_wdata[`WRITE_RANGE])  dm_request_csr = dm_request_next(REQUEST_NUMBER_SET_CSR);
-                else                         dm_request_csr = dm_request_next(REQUEST_NUMBER_GET_CSR);
+                if(dmi_wdata[`REGNO_RANGE]==REGNO_CSR_BASE+CSR_DPC) begin
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_csr = dm_request_next(REQUEST_NUMBER_SET_DPC);
+                        else                         dm_request_csr = dm_request_next(REQUEST_NUMBER_GET_DPC);
+                end else begin
+                        if(dmi_wdata[`WRITE_RANGE])  dm_request_csr = dm_request_next(REQUEST_NUMBER_SET_CSR);
+                        else                         dm_request_csr = dm_request_next(REQUEST_NUMBER_GET_CSR);
+                end
         end
         always @* begin
                 if(dmi_wdata[`WRITE_RANGE])  dm_request_mem = dm_request_next(REQUEST_NUMBER_SET_MEM);
