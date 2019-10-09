@@ -36,29 +36,17 @@ check_request:
         andi    s0, s0, 0x3f
 
         beq     s0, x0, request_resume
-        li      s1, 2
-        beq     s0, s1, request_set_s0
-        li      s1, 3
-        beq     s0, s1, request_set_s1
-        li      s1, 4
+        li      s1, 1
         beq     s0, s1, request_set_gpr
-        li      s1, 5
-        beq     s0, s1, request_get_s0
-        li      s1, 6
-        beq     s0, s1, request_get_s1
-        li      s1, 7
+        li      s1, 2
         beq     s0, s1, request_get_gpr
-        li      s1, 8
-        beq     s0, s1, request_set_dpc
-        li      s1, 9
+        li      s1, 3
         beq     s0, s1, request_set_csr
-        li      s1, 10
-        beq     s0, s1, request_get_dpc
-        li      s1, 11
+        li      s1, 4
         beq     s0, s1, request_get_csr
-        li      s1, 12
+        li      s1, 5
         beq     s0, s1, request_set_mem
-        li      s1, 13
+        li      s1, 6
         beq     s0, s1, request_get_mem
 1:      j       1b
 
@@ -72,49 +60,19 @@ request_resume:
         csrr    s1, 0x7b3
         dret
 
-request_set_s0:
-        la      s0, dm_data0
-        lb      s1, 0(s0)
-        csrw    0x7b2, s1
-        j       request_complete
-request_set_s1:
-        la      s0, dm_data0
-        lb      s1, 0(s0)
-        csrw    0x7b3, s1
-        j       request_complete
 request_set_gpr:
         la      s0, dm_data0
         lb      x0, 0(s0) ###
-        j       request_complete
-request_get_s0:
-        la      s0, dm_data0
-        csrr    s1, 0x7b2
-        sb      s1, 0(s0)
-        j       request_complete
-request_get_s1:
-        la      s0, dm_data0
-        csrr    s1, 0x7b3
-        sb      s1, 0(s0)
         j       request_complete
 request_get_gpr:
         la      s0, dm_data0
         sb      x0, 0(s0) ###
         j       request_complete
 
-request_set_dpc:
-        la      s0, dm_data0
-        lb      s1, 0(s0)
-        csrw    dpc, s1
-        j       request_complete
 request_set_csr:
         la      s0, dm_data0
         lb      s1, 0(s0)
         csrw    0x000, s1 ###
-        j       request_complete
-request_get_dpc:
-        la      s0, dm_data0
-        csrr    s1, dpc
-        sb      s1, 0(s0)
         j       request_complete
 request_get_csr:
         la      s0, dm_data0

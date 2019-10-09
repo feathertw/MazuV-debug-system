@@ -1,21 +1,14 @@
-`define SET_S0_FIXSIZE_ADDR      'h100
-`define SET_S1_FIXSIZE_ADDR      'h114
-`define SET_GPR_FIXSIZEREG_ADDR  'h128
-`define GET_S0_FIXSIZE_ADDR      'h13c
-`define GET_S1_FIXSIZE_ADDR      'h150
-`define GET_GPR_FIXSIZEREG_ADDR  'h160
-`define SET_DPC_FIXSIZE_ADDR     'h170
-`define SET_CSR_FIXSIZE_ADDR     'h184
-`define SET_CSR_FIXREG_ADDR      'h188
-`define GET_DPC_FIXSIZE_ADDR     'h19c
-`define GET_CSR_FIXREG_ADDR      'h1ac
-`define GET_CSR_FIXSIZE_ADDR     'h1b0
-`define SET_MEM_FIXSIZE_ADDR     'h1d0
-`define GET_MEM_FIXSIZE_ADDR     'h1ec
-
+`define SET_GPR_FIXSIZEREG_ADDR  'h0d0
+`define GET_GPR_FIXSIZEREG_ADDR  'h0e0
+`define SET_CSR_FIXSIZE_ADDR     'h0f0
+`define SET_CSR_FIXREG_ADDR      'h0f4
+`define GET_CSR_FIXREG_ADDR      'h104
+`define GET_CSR_FIXSIZE_ADDR     'h108
+`define SET_MEM_FIXSIZE_ADDR     'h128
+`define GET_MEM_FIXSIZE_ADDR     'h144
 
 module dm_rom #(
-        parameter ROM_SIZE = 'h400
+        parameter ROM_SIZE = 'h0
 ) (
         input  [11:0] fix_reg,
         input  [ 1:0] fix_size,
@@ -41,18 +34,11 @@ module dm_rom #(
                                 `SET_CSR_FIXREG_ADDR     :    assign rom[gvi/4] = (fix_reg<<20) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
                                 `GET_CSR_FIXREG_ADDR     :    assign rom[gvi/4] = (fix_reg<<20) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
 
-                                `SET_S0_FIXSIZE_ADDR     :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
-                                `SET_S1_FIXSIZE_ADDR     :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
-                                `GET_S0_FIXSIZE_ADDR     :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
-                                `GET_S1_FIXSIZE_ADDR     :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
-                                `SET_DPC_FIXSIZE_ADDR    :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
                                 `SET_CSR_FIXSIZE_ADDR    :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
-                                `GET_DPC_FIXSIZE_ADDR    :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
                                 `GET_CSR_FIXSIZE_ADDR    :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
                                 `SET_MEM_FIXSIZE_ADDR    :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
                                 `GET_MEM_FIXSIZE_ADDR    :    assign rom[gvi/4] = (fix_size<<12) | {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
-
-                                default:           assign rom[gvi/4] =                   {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
+                                default:                      assign rom[gvi/4] =                  {rom_file[gvi+3],rom_file[gvi+2],rom_file[gvi+1],rom_file[gvi+0]};
                         endcase
                 end
         endgenerate
